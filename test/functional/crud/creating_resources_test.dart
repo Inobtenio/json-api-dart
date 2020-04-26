@@ -13,7 +13,7 @@ void main() async {
   final base = Uri(scheme: 'http', host: host, port: port);
   final urls = StandardRouting(base);
 
-  group('Server-genrated ID', () {
+  group('Server-generated ID', () {
     test('201 Created', () async {
       final repository = InMemoryRepository({
         'people': {},
@@ -34,7 +34,7 @@ void main() async {
       expect(created.id, isNotNull);
       expect(created.attributes, equals(person.attributes));
       final r1 = await client.send(
-          Request.fetchResource(), Uri.parse(r.http.headers['location']));
+          FetchResourceRequest(), Uri.parse(r.http.headers['location']));
       expect(r1.http.statusCode, 200);
       expectResourcesEqual(r1.decodeDocument().data.unwrap(), created);
     });

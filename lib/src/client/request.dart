@@ -1,69 +1,206 @@
 import 'dart:convert';
 
 import 'package:json_api/document.dart';
+import 'package:json_api/http.dart';
 import 'package:json_api/query.dart';
-import 'package:json_api/src/http/http_method.dart';
+import 'package:json_api/src/client/response.dart';
 
-/// A JSON:API request.
-class Request<D extends PrimaryData> {
-  Request(this.method, this.decoder, {QueryParameters parameters})
-      : headers = const {'Accept': Document.contentType},
-        body = '',
-        parameters = parameters ?? QueryParameters.empty();
+abstract class Request<R extends Response> {
+  static const noPayloadHeader = {'Accept': Document.contentType};
+  static const payloadHeader = {
+    'Accept': Document.contentType,
+    'Content-Type': Document.contentType
+  };
 
-  Request.withPayload(Document document, this.method, this.decoder,
-      {QueryParameters parameters})
-      : headers = const {
-          'Accept': Document.contentType,
-          'Content-Type': Document.contentType
-        },
-        body = jsonEncode(document),
-        parameters = parameters ?? QueryParameters.empty();
+  HttpRequest toHttp(Uri uri);
 
-  static Request<ResourceCollectionData> fetchCollection(
-          {QueryParameters parameters}) =>
-      Request(HttpMethod.GET, ResourceCollectionData.fromJson,
-          parameters: parameters);
+  R decode(HttpResponse response);
+}
 
-  static Request<ResourceData> fetchResource({QueryParameters parameters}) =>
-      Request(HttpMethod.GET, ResourceData.fromJson, parameters: parameters);
+class FetchCollectionRequest implements Request<Response> {
+  FetchCollectionRequest({QueryParameters queryParameters})
+      : _query = queryParameters ?? QueryParameters.empty();
 
-  static Request<ToOne> fetchToOne({QueryParameters parameters}) =>
-      Request(HttpMethod.GET, ToOne.fromJson, parameters: parameters);
+  final QueryParameters _query;
 
-  static Request<ToMany> fetchToMany({QueryParameters parameters}) =>
-      Request(HttpMethod.GET, ToMany.fromJson, parameters: parameters);
+  @override
+  Response decode(HttpResponse http) => Response(http);
 
-  static Request<Relationship> fetchRelationship(
-          {QueryParameters parameters}) =>
-      Request(HttpMethod.GET, Relationship.fromJson, parameters: parameters);
+  @override
+  HttpRequest toHttp(Uri uri) =>
+      HttpRequest(HttpMethod.GET, _query.addToUri(uri),
+          headers: Request.noPayloadHeader);
+}
 
-  static Request<ResourceData> createResource(
-          Document<ResourceData> document) =>
-      Request.withPayload(document, HttpMethod.POST, ResourceData.fromJson);
+class FetchResourceRequest implements Request<Response> {
+  FetchResourceRequest({QueryParameters queryParameters})
+      : _query = queryParameters ?? QueryParameters.empty();
 
-  static Request<ResourceData> updateResource(
-          Document<ResourceData> document) =>
-      Request.withPayload(document, HttpMethod.PATCH, ResourceData.fromJson);
+  final QueryParameters _query;
 
-  static Request<ResourceData> deleteResource() =>
-      Request(HttpMethod.DELETE, ResourceData.fromJson);
+  @override
+  Response decode(HttpResponse http) => Response(http);
 
-  static Request<ToOne> replaceToOne(Document<ToOne> document) =>
-      Request.withPayload(document, HttpMethod.PATCH, ToOne.fromJson);
+  @override
+  HttpRequest toHttp(Uri uri) =>
+      HttpRequest(HttpMethod.GET, _query.addToUri(uri),
+          headers: Request.noPayloadHeader);
+}
 
-  static Request<ToMany> deleteFromToMany(Document<ToMany> document) =>
-      Request.withPayload(document, HttpMethod.DELETE, ToMany.fromJson);
+class FetchToOneRequest implements Request<Response> {
+  FetchToOneRequest({QueryParameters queryParameters})
+      : _query = queryParameters ?? QueryParameters.empty();
 
-  static Request<ToMany> replaceToMany(Document<ToMany> document) =>
-      Request.withPayload(document, HttpMethod.PATCH, ToMany.fromJson);
+  final QueryParameters _query;
 
-  static Request<ToMany> addToMany(Document<ToMany> document) =>
-      Request.withPayload(document, HttpMethod.POST, ToMany.fromJson);
+  @override
+  Response decode(HttpResponse http) => Response(http);
 
-  final PrimaryDataDecoder<D> decoder;
-  final String method;
-  final String body;
-  final Map<String, String> headers;
-  final QueryParameters parameters;
+  @override
+  HttpRequest toHttp(Uri uri) =>
+      HttpRequest(HttpMethod.GET, _query.addToUri(uri),
+          headers: Request.noPayloadHeader);
+}
+
+class FetchToManyRequest implements Request<Response> {
+  FetchToManyRequest({QueryParameters queryParameters})
+      : _query = queryParameters ?? QueryParameters.empty();
+
+  final QueryParameters _query;
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) =>
+      HttpRequest(HttpMethod.GET, _query.addToUri(uri),
+          headers: Request.noPayloadHeader);
+}
+
+class CreateNewResourceRequest implements Request<Response> {
+  CreateNewResourceRequest(this._resource);
+
+  final NewResource _resource;
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) => HttpRequest(HttpMethod.POST, uri,
+      headers: Request.payloadHeader,
+      body: jsonEncode(
+          Document(ResourceData(ResourceObject.fromResource(_resource)))));
+}
+
+class CreateResourceRequest implements Request<Response> {
+  CreateResourceRequest(this._resource);
+
+  final Resource _resource;
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) => HttpRequest(HttpMethod.POST, uri,
+      headers: Request.payloadHeader,
+      body: jsonEncode(
+          Document(ResourceData(ResourceObject.fromResource(_resource)))));
+}
+
+class UpdateResourceRequest implements Request<Response> {
+  UpdateResourceRequest(this._resource);
+
+  final Resource _resource;
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) => HttpRequest(HttpMethod.PATCH, uri,
+      headers: Request.payloadHeader,
+      body: jsonEncode(
+          Document(ResourceData(ResourceObject.fromResource(_resource)))));
+}
+
+class DeleteResourceRequest implements Request<Response> {
+  DeleteResourceRequest();
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) =>
+      HttpRequest(HttpMethod.PATCH, uri, headers: Request.noPayloadHeader);
+}
+
+class ReplaceToOneRequest implements Request<Response> {
+  ReplaceToOneRequest(this._identifier);
+
+  final Identifier _identifier;
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) => HttpRequest(HttpMethod.PATCH, uri,
+      headers: Request.payloadHeader,
+      body: jsonEncode(
+          Document(ToOne(IdentifierObject.fromIdentifier(_identifier)))));
+}
+
+class DeleteToOneRequest implements Request<Response> {
+  DeleteToOneRequest();
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) => HttpRequest(HttpMethod.PATCH, uri,
+      headers: Request.payloadHeader,
+      body: jsonEncode(Document(ToOne.empty())));
+}
+
+class ReplaceToManyRequest implements Request<Response> {
+  ReplaceToManyRequest(this._identifiers);
+
+  final Iterable<Identifier> _identifiers;
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) => HttpRequest(HttpMethod.PATCH, uri,
+      headers: Request.payloadHeader,
+      body: jsonEncode(
+          Document(ToMany(_identifiers.map(IdentifierObject.fromIdentifier)))));
+}
+
+class DeleteToManyRequest implements Request<Response> {
+  DeleteToManyRequest(this._identifiers);
+
+  final Iterable<Identifier> _identifiers;
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) => HttpRequest(HttpMethod.DELETE, uri,
+      headers: Request.payloadHeader,
+      body: jsonEncode(
+          Document(ToMany(_identifiers.map(IdentifierObject.fromIdentifier)))));
+}
+
+class AddToManyRequest implements Request<Response> {
+  AddToManyRequest(this._identifiers);
+
+  final Iterable<Identifier> _identifiers;
+
+  @override
+  Response decode(HttpResponse http) => Response(http);
+
+  @override
+  HttpRequest toHttp(Uri uri) => HttpRequest(HttpMethod.POST, uri,
+      headers: Request.payloadHeader,
+      body: jsonEncode(
+          Document(ToMany(_identifiers.map(IdentifierObject.fromIdentifier)))));
 }

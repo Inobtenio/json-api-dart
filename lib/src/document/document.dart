@@ -1,9 +1,9 @@
-import 'package:json_api/document.dart';
 import 'package:json_api/src/document/api.dart';
 import 'package:json_api/src/document/document_exception.dart';
 import 'package:json_api/src/document/error_object.dart';
 import 'package:json_api/src/document/json_encodable.dart';
 import 'package:json_api/src/document/primary_data.dart';
+import 'package:json_api/src/document/resource_object.dart';
 import 'package:json_api/src/nullable.dart';
 
 class Document<D extends PrimaryData> implements JsonEncodable {

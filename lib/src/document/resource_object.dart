@@ -1,6 +1,6 @@
-import 'package:json_api/document.dart';
 import 'package:json_api/src/document/document_exception.dart';
 import 'package:json_api/src/document/identifier.dart';
+import 'package:json_api/src/document/identifier_object.dart';
 import 'package:json_api/src/document/json_encodable.dart';
 import 'package:json_api/src/document/link.dart';
 import 'package:json_api/src/document/relationship.dart';

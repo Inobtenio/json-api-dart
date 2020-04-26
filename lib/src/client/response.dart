@@ -1,39 +1,12 @@
-import 'dart:convert';
-
-import 'package:json_api/document.dart';
 import 'package:json_api/http.dart';
 import 'package:json_api/src/client/status_code.dart';
 
 /// A JSON:API response
-class Response<D extends PrimaryData> {
-  Response(this.http, this._decoder);
-
-  final PrimaryDataDecoder<D> _decoder;
+class Response {
+  Response(this.http);
 
   /// The HTTP response.
   final HttpResponse http;
-
-  /// Returns the Document parsed from the response body.
-  /// Throws a [StateError] if the HTTP response contains empty body.
-  /// Throws a [DocumentException] if the received document structure is invalid.
-  /// Throws a [FormatException] if the received JSON is invalid.
-  Document<D> decodeDocument() {
-    if (http.body.isEmpty) throw StateError('The HTTP response has empty body');
-    return Document.fromJson(jsonDecode(http.body), _decoder);
-  }
-
-  /// Returns the async Document parsed from the response body.
-  /// Throws a [StateError] if the HTTP response contains empty body.
-  /// Throws a [DocumentException] if the received document structure is invalid.
-  /// Throws a [FormatException] if the received JSON is invalid.
-  Document<ResourceData> decodeAsyncDocument() {
-    if (http.body.isEmpty) throw StateError('The HTTP response has empty body');
-    return Document.fromJson(jsonDecode(http.body), ResourceData.fromJson);
-  }
-
-  bool get isEmpty => http.body.isEmpty;
-
-  bool get isNotEmpty => http.body.isNotEmpty;
 
   /// Was the query successful?
   ///
@@ -44,7 +17,7 @@ class Response<D extends PrimaryData> {
   /// This property is an equivalent of `202 Accepted` HTTP status.
   /// It indicates that the query is accepted but not finished yet (e.g. queued).
   /// See: https://jsonapi.org/recommendations/#asynchronous-processing
-  bool get isAsync => StatusCode(http.statusCode).isPending;
+  bool get isPending => StatusCode(http.statusCode).isPending;
 
   /// Any non 2** status code is considered a failed operation.
   /// For failed requests, [document] is expected to contain [ErrorDocument]

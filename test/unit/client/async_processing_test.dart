@@ -16,7 +16,7 @@ void main() {
     handler.response = responseFactory.accepted(Resource('jobs', '42'));
 
     final r = await client.createResource(Resource('books', '1'));
-    expect(r.isAsync, true);
+    expect(r.isPending, true);
     expect(r.isSuccessful, false);
     expect(r.isFailed, false);
     expect(r.decodeAsyncDocument().data.unwrap().type, 'jobs');

@@ -37,7 +37,7 @@ void main() async {
         .addToMany('books', '2', 'authors', [Identifier('writers', '1')]);
 
     final response = await client.fetchResource('books', '2',
-        parameters: Include(['authors']));
+        queryParameters: Include(['authors']));
 
     expect(response.decodeDocument().data.unwrap().attributes['title'],
         'Refactoring');
